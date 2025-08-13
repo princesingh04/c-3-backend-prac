@@ -1,5 +1,6 @@
 const express = require("express");
 const courseRouter = express.Router();
+const { z } = require("zod");
 courseRouter.post("/purchase",function(req,res){
     res.json({
         message:"course purchase endpoint"
