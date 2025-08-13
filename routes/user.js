@@ -4,7 +4,7 @@ const { z } = require("zod");
 const bcrypt = require("bcrypt");
 const userRouter = express.Router();
 const jwt = require("jsonwebtoken");
-const JWT_USER_PASSWORD = "123auisdffhd"
+const {JWT_USER_PASSWORD} = require("../config");
 const signupSchema = z.object({
     email: z.string().email(),
     password: z.string().min(6),

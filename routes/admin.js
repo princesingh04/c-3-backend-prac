@@ -1,18 +1,20 @@
 const { Router } = require("express");
-const { adminModel } = require("../db");
+const { adminModel, courseModel } = require("../db");
 const { z } = require("zod");
 const jwt = require("jsonwebtoken");
-const JWT_ADMIN_PASSWORD = "123auifasdffsdffhd"
+const { JWT_ADMIN_PASSWORD } = require("../config");
+
 const bcrypt = require("bcrypt");
+const { adminMiddleware } = require("../middlewares/admin");
 const adminRouter = Router();
 const signupSchema = z.object({
     email: z.string().email(),
-    password:z.string().min(6),
+    password: z.string().min(6),
     firstName: z.string(),
     lastName: z.string()
 })
-adminRouter.post("/signup", async function(req, res) {
-      const parseResult = signupSchema.safeParse(req.body);
+adminRouter.post("/signup", async function (req, res) {
+    const parseResult = signupSchema.safeParse(req.body);
     if (!parseResult.success) {
         return res.status(400).json({ error: parseResult.error.errors });
     }
@@ -28,38 +30,50 @@ adminRouter.post("/signup", async function(req, res) {
         message: "Signup succedded"
     });
 });
-adminRouter.post("/signin", async function(req, res) {
-   const { email, password } = req.body;
+
+
+adminRouter.post("/signin", async function (req, res) {
+    const { email, password } = req.body;
     const admin = await adminModel.findOne({
         email: email,
     })
-    if (admin && await bcrypt.compare(password,admin.password)){
+    if (admin && await bcrypt.compare(password, admin.password)) {
         const token = jwt.sign({
-            id:admin._id
-        },JWT_ADMIN_PASSWORD);
+            id: admin._id
+        }, JWT_ADMIN_PASSWORD);
         res.json({
 
-            token:token
+            token: token
         })
 
     }
     else {
         res.status(403).json({
-            message:"Incorrect Crediential "
+            message: "Incorrect Crediential "
         })
     }
 });
-adminRouter.post("/course", function(req, res) {
+
+
+adminRouter.post("/course", adminMiddleware, async function (req, res) {
+    const adminId = req.userId;
+    const { title, description, imageUrl, price } = req.body;
+const course  = await courseModel.create({
+        title, description, imageUrl, price, creatorId: adminId
+    })
+    res.json({
+        message: "Course Created",
+        courseId: course._id
+    });
+});
+
+
+adminRouter.put("/course", function (req, res) {
     res.json({
         message: "Admin signed in"
     });
 });
-adminRouter.put("/course", function(req, res) {
-    res.json({
-        message: "Admin signed in"
-    });
-});
-adminRouter.get("/course/bulk", function(req, res) {
+adminRouter.get("/course/bulk", function (req, res) {
     res.json({
         message: "Admin signed in"
     });
